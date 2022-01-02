@@ -1,0 +1,32 @@
+The goal of this project was to show that the obvious default topologies for
+clustering in two dimensions (square, torus, surface of a sphere) have superior
+alternatives. This has been clearly demonstrated.
+
+Circle is superior to square but still so awful that it shouldn't be seriously
+considered. Having hard boundaries on your space is just bad.
+
+Torus is inferior to to both a Twisted Torus and a Klein Bottle. Unlike
+everything else Klein Bottle isn't homogeneous and its mathematical
+justification isn't obvious, so it's probably best to consider Twisted Torus
+the serious alternative.
+
+Spherical Surface is clearly inferior to Projective Plane. In any project which
+is currently using a Spherical Surface you should try switching. It will almost
+always produce a small improvement in behavior for very little computational
+cost.
+
+In two dimensions comparing a Twisted Torus and Projective Plane doesn't have a
+clear winner. For any given project trying both and comparing is be a good idea.
+
+For larger numbers of dimensions Twisted Torus has a number of drawbacks: It
+isn't obvious how to generalize it to larger numbers of dimensions, the naive
+approach of trying all possible wraparounds to determine distance slows down
+exponentially with the number of dimensions, and it's overall more complex. For
+these reasons it's probably best to default to Projective Plane if you're using
+more than two dimensions.
+
+A reasonably straightforward higher dimensional generalization of Twisted Torus
+is that for each dimension number its length is the height of a tetrahedron in
+that number of dimensions and when it wraps around it twists (adds one the
+length to half to) all the lower dimension numbers. But this suite doesn't
+benchmark that concept.
