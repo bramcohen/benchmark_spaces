@@ -15,18 +15,27 @@ is currently using a Spherical Surface you should try switching. It will almost
 always produce a small improvement in behavior for very little computational
 cost.
 
-In two dimensions comparing a Twisted Torus and Projective Plane doesn't have a
-clear winner. For any given project trying both and comparing is be a good idea.
+Spherical Surface's poor results on large numbers of points are due to each
+point having a single antipode. In any data set where that sort of behavior
+isn't expected and specifically being searched for it will result in a somewhat
+arbitrary other point being selected as the opposite point with an erroneously
+large distance. For data sets where having exact opposites is both expected and
+searched for the Spherical Surface may work well.
 
-For larger numbers of dimensions Twisted Torus has a number of drawbacks: It
-isn't obvious how to generalize it to larger numbers of dimensions, the naive
-approach of trying all possible wraparounds to determine distance slows down
-exponentially with the number of dimensions, and it's overall more complex. For
-these reasons it's probably best to default to Projective Plane if you're using
-more than two dimensions.
+Twisted Torus versus Projective Plane doesn't have a clear winner. For any
+given project trying both is a good idea.
 
-A reasonably straightforward higher dimensional generalization of Twisted Torus
-is that for each dimension number its length is the height of a tetrahedron in
-that number of dimensions and when it wraps around it twists (adds one the
-length to half to) all the lower dimension numbers. But this suite doesn't
-benchmark that concept.
+The Twisted Torus doesn't generalize trivially to larger numbers of dimensions.
+Most likely for each specific number of dimensions there's an analogue based on
+the lattice which leads to the best lattice-based kissing number for that
+number of dimensions. That would be specified by for each dimension its length
+and which other dimensions it causes to get offset when it wraps. Working those
+out up to a reasonable number of dimensions may be a good homework assignment
+for a mathematician who knows how to do it.
+
+Finding the closest mirror to a given point of another point in a larger number
+of dimensions on a torus is straightforward: For each dimension determine
+whether it's closest wraping positively, negatively, or not at all in that
+dimension and apply those independently. For twisted torus analogues it isn't
+so simple and an algorithm for finding the closest mirror in a reasonable
+amount of time will have to be worked out for each specific geometry.
