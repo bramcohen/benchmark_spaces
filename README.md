@@ -14,7 +14,7 @@ To get metrics run benchmark.py from the command line.
 There's some highly opinionated interpretation and commentary in Commentary.txt
 
 Current output is:
-
+```
 Square
  3 0.03
  4 0.18
@@ -106,3 +106,4 @@ Projective Plane
 12 0.29
 13 0.30
 14 0.31
+```
