@@ -1,41 +1,22 @@
-The goal of this project was to show that the obvious default topologies for
-clustering in two dimensions (square, torus, surface of a sphere) have superior
-alternatives. This has been clearly demonstrated.
+This project implements different topologies for clustering points.
 
-Circle is superior to square but still so awful that it shouldn't be seriously
-considered. Having hard boundaries on your space is just bad.
+For most applications you should use Sphere or its much less common relative 
+Projective Sphere. The choice of which boils down to a simple question: Is 
+points having exact opposites an expected property of the data which you're 
+using? If the answer is yes you should use a Sphere. If not you should use a 
+Projective Sphere. In practice people use Sphere much too often because they 
+don't know about the alternative.
 
-Torus is inferior to to both a Twisted Torus and a Klein Bottle. Unlike
-everything else Klein Bottle isn't homogeneous and its mathematical
-justification isn't obvious, so it's probably best to consider Twisted Torus
-the serious alternative.
+The number of dimensions to use depends heavily on the data you're working 
+with. Making the number of dimensions too high will result in overfitting. 
+Too low will result in not pulling out much information.
 
-Spherical Surface is clearly inferior to Projective Plane. In any project which
-is currently using a Spherical Surface you should try switching. It will almost
-always produce a small improvement in behavior for very little computational
-cost.
+The Twisted Torus is a special case which acts a bit like a Projective Sphere 
+with dimensions between 2 and 3. It is especially useful for doing image 
+visualizations. Higher dimensional variants on it could be made based 
+on lattice packings. Doing that well is an interesting problem.
 
-Spherical Surface's poor results on large numbers of points are due to each
-point having a single antipode. In any data set where that sort of behavior
-isn't expected and specifically being searched for it will result in a somewhat
-arbitrary other point being selected as the opposite point with an erroneously
-large distance. For data sets where having exact opposites is both expected and
-searched for the Spherical Surface may work well.
-
-Twisted Torus versus Projective Plane doesn't have a clear winner. For any
-given project trying both is a good idea.
-
-The Twisted Torus doesn't generalize trivially to larger numbers of dimensions.
-Most likely for each specific number of dimensions there's an analogue based on
-the lattice which leads to the best lattice-based kissing number for that
-number of dimensions. That would be specified by for each dimension its length
-and which other dimensions it causes to get offset when it wraps. Working those
-out up to a reasonable number of dimensions may be a good homework assignment
-for a mathematician who knows how to do it.
-
-Finding the closest mirror to a given point of another point in a larger number
-of dimensions on a torus is straightforward: For each dimension determine
-whether it's closest wraping positively, negatively, or not at all in that
-dimension and apply those independently. For twisted torus analogues it isn't
-so simple and an algorithm for finding the closest mirror in a reasonable
-amount of time will have to be worked out for each specific geometry.
+People intuitively assume that hypercubes are useful for discovering 
+parameters but that doesn't pan out in practice. A hypercube looks like a 
+spiky ball, especially as the number of dimensions goes up. Popular things 
+wind up in the center and unpopular things get shoved into random corners. 
