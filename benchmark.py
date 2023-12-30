@@ -475,8 +475,7 @@ lattice_factories = [lambda: point_to_4d(2),
         lambda: multipoint([point_to_8d(8), point_to_8d(6), point_on_torus(1)]),
         lambda: multipoint([point_to_8d(8), point_to_8d(8)])]
 
-#benchmark_factory(lattice_factories[3 - 2])
-benchmark_factory(lambda: point_on_projective_sphere(3))
+#benchmark_factory(lattice_factories[8 - 2])
 
 def find_average_distance(factory):
     distances = []
@@ -511,6 +510,7 @@ def close(a, b):
     assert a-b < .00001
     assert b-a < .00001
 
+# For debugging, doesn't work on sphere-based geometries
 def test_points(factory):
     for i in range(10000):
         p1 = factory()

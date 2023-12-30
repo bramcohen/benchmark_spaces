@@ -6,6 +6,10 @@ minor extra computational requirements. Comparison is here:
 
 ![Space type comparisons](https://github.com/bramcohen/benchmark_spaces/blob/main/compare_everything.png?raw=true)
 
+This metric is a good measure of how much unnecessary noise is added to 
+distances and how easily points can slide past each other when being 
+annealed. 
+
 The lattice implementation benchmarks look a little bumpy because of 
 strangeness in sphere packing in different numbers of dimensions. It is 
 optimal in dimensions 2, 3, 4, 6, and 8, but there are improvements which 
