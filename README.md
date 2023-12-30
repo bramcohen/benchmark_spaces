@@ -1,19 +1,21 @@
-# benchmark_spaces
-Implements different two dimensional spaces for clustering algorithms
+# Better spatial geometries for use in clustering algorithms
+Contains implementations of alternative geometries for spaces which can be 
+used in clustering algorithms. Using the spaces based on optimal sphere 
+packing should result in slightly better affinity measurements with only 
+minor extra computational requirements. Comparison is here:
 
-Contains code for making animations of simulated annealing of points 
-repelling each other and also for measuring the average deviation in 
-distances between random points (lower is better).
+!(https://github.com/bramcohen/benchmark_spaces/blob/main/compare_everything.png?raw=true)
 
-The upshort of this is:
+The lattice implementation benchmarks look a little bumpy because of 
+strangeness in sphere packing in different numbers of dimensions. It is 
+optimal in dimensions 2, 3, 4, 6, and 8, but there are improvements which 
+could be implemented with a bunch of work in 5, 7, and 9 dimensions. Above 
+that the best option is an open mathematical problem but those are large 
+numbers of dimensions to use for clustering anyway.
 
-If you're doing two dimensional visualtizations you should use the 
-geometry called 'twisted torus'. 
+For visualization 2d lattice should be used. It 'crystallizes' nicely as 
+shown here:
 
-Otherwise if having exact opposites isn't part of expected/wanted 
-semantics of your data you should use Projective Sphere.
+!(https://github.com/bramcohen/benchmark_spaces/blob/main/movie_twisted_torus_6.gif?raw=true)
 
-In the unusual case of polar opposites being expected you should 
-use Sphere.
-
-More detailed thoughts are in Commentary.txt
+For applications which need antipodes (opposite points) Torus is best.
