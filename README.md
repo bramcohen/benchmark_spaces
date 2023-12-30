@@ -4,7 +4,7 @@ used in clustering algorithms. Using the spaces based on optimal sphere
 packing should result in slightly better affinity measurements with only 
 minor extra computational requirements. Comparison is here:
 
-!(https://github.com/bramcohen/benchmark_spaces/blob/main/compare_everything.png?raw=true)
+![Space type comparisons](https://github.com/bramcohen/benchmark_spaces/blob/main/compare_everything.png?raw=true)
 
 The lattice implementation benchmarks look a little bumpy because of 
 strangeness in sphere packing in different numbers of dimensions. It is 
@@ -16,6 +16,6 @@ numbers of dimensions to use for clustering anyway.
 For visualization 2d lattice should be used. It 'crystallizes' nicely as 
 shown here:
 
-!(https://github.com/bramcohen/benchmark_spaces/blob/main/movie_twisted_torus_6.gif?raw=true)
+![Crystallizing in 2d](https://github.com/bramcohen/benchmark_spaces/blob/main/movie_twisted_torus_6.gif?raw=true)
 
 For applications which need antipodes (opposite points) Torus is best.
