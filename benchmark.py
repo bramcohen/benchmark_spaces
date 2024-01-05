@@ -1,6 +1,7 @@
 from random import seed, uniform, gauss, shuffle, randrange
 from statistics import stdev, mean
 from math import log, acos
+from itertools import product
 
 from PIL import Image, ImageDraw
 import imageio
@@ -192,18 +193,18 @@ def _c(a, b):
         b += 1
     return b
 
-last_dimensions_to_8 = [-1, -1, -1, -1, -1, -1, 3**(1/2), -1, 1**(1/2)]
+last_dimensions_to_8 = [-1, -1, -1, -1, -1, 4**(1/2), 3**(1/2), 2**(1/2), 1**(1/2)]
 
 class point_to_8d:
     """
     An efficient implementation of space which wraps around according to an optimal sphere 
-    packing in 6 and 8 dimensions. 
+    packing in up to 8 dimensions. 
 
     These are constructed by starting with a torus, removing one color from checkerboard coloring 
-    it, and adding in antipodal points by offsetting everything by half. In 6 dimensions the 
-    last dimension is stretched to make the major and minor diagonals the same length.
+    it, and adding in antipodal points by offsetting everything by half, then stretching the last
+    dimension to make the major and minor diagonals the same length.
     
-    Doesn't work in odd numbers because going up to the antipode twice hits an eliminated point.
+    In odd dimensions wrapping around the last dimension doesn't change the parity.
 
     If you want to put these in proximity buckets you need to do one final step of 
     canonicalization so every point has one representation instead of 2.
@@ -231,10 +232,10 @@ class point_to_8d:
         lastlen = last_dimensions_to_8[len(self.coords)]
         while self.coords[-1] > lastlen:
             self.coords[-1] -= lastlen
-            self.parity ^= 1
+            self.parity ^= not len(self.coords) & 1
         while self.coords[-1] < 0:
             self.coords[-1] += lastlen
-            self.parity ^= 1
+            self.parity ^= not len(self.coords) & 1
 
     def distance(self, other):
         return self._closest(other)[0]
@@ -303,7 +304,7 @@ class point_to_8d:
             diff = 2 * (oc - mc) - lastval
             if diff > 0:
                 r.append(oc - lastval)
-                parity ^= 1
+                parity ^= not len(self.coords) & 1
                 if lastval * diff < lowest_amount:
                     lowest_dim = d-1
             else:
@@ -314,7 +315,7 @@ class point_to_8d:
             diff = 2 * (mc - oc) - lastval
             if diff > 0:
                 r.append(oc + lastval)
-                parity ^= 1
+                parity ^= not len(self.coords) & 1
                 if lastval * diff < lowest_amount:
                     lowest_dim = d-1
             else:
@@ -332,6 +333,127 @@ class point_to_8d:
                     r[lowest_dim] -= 1
                 else:
                     r[lowest_dim] += 1
+        return (sum((a-b)**2 for (a, b) in zip(self.coords, r))**(1/2), r)
+
+def xorall(mythings):
+    r = 0
+    for m in mythings:
+        r ^= m
+    return r
+
+def xorvectors(myvectors):
+    r = []
+    for selections in product(*[[0, 1]] * len(myvectors)):
+        next = [[0] * len(myvectors[0])] + [x for x, y in zip(myvectors, selections) if y]
+        r.append([xorall(x) for x in zip(*next)])
+    return r
+
+over_8d_offsets = [[]] * 9 + [
+    [[0] * 9, [1] * 8 + [0]],
+    [[0] * 10, [1] * 8 + [0, 0]],
+    [[0] * 11, [1] * 8 + [0, 0, 0]],
+    [[0] * 12, [1] * 8 + [0] * 4, [1] * 4 + [0] * 4 + [1] * 4, [0] * 4 + [1] * 8],
+    [[0] * 13, [1] * 8 + [0] * 5, [1] * 4 + [0] * 4 + [1] * 4 + [0], [0] * 4 + [1] * 8 + [0]],
+    [[0] * 14, [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+        [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
+        [1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0],
+        [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+        [1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1]],
+    xorvectors([[0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+        [0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]])
+]
+
+over_8d_offsets.append([x + [0] for x in over_8d_offsets[-1]])
+
+class point_over_8d:
+    def __init__(self, d, other_coords = None, other_parity = None):
+        if other_coords:
+            self.coords = [x for x in other_coords]
+            self.parity = other_parity
+            self._canonicalize()
+        else:
+            self.coords = [uniform(0, 1) for x in range(d)]
+            self.parity = randrange(2)
+
+    def clone(self):
+        return point_over_8d(0, self.coords, self.parity)
+
+    def _canonicalize(self):
+        for i in range(len(self.coords)):
+            while self.coords[i] > 1:
+                self.coords[i] -= 1
+                self.parity ^= 1
+            while self.coords[i] < 0:
+                self.coords[i] += 1
+                self.parity ^= 1
+
+    def distance(self, other):
+        return self._closest(other)[0]
+
+    def move_from(self, other, distance):
+        d, c = self._closest(other)
+        mag = distance/d
+        self.coords = [tocoord + (tocoord-fromcoord)*mag for (tocoord, fromcoord) in zip(self.coords, c)]
+        self._canonicalize()
+
+    def _alternate(self):
+        other = self.clone()
+        for i in range(8):
+            other.coords[i] += 0.5
+        other._canonicalize()
+        return other
+
+    def _closest(self, other):
+        candidates = [self._closest2(self._make(other, offsets)) for offsets in over_8d_offsets[len(self.coords)]]
+        return min(candidates)
+
+    def _make(self, other, offsets):
+        return point_over_8d(None, [c + 0.5 if x else c for c, x in zip(other.coords, offsets)], other.parity)
+
+    def _closest2(self, other):
+        parity = self.parity ^ other.parity
+        d = len(self.coords)
+        lowest_dim = -1
+        lowest_amount = 2
+        r = []
+        for i in range(d):
+            oc = other.coords[i]
+            mc = self.coords[i]
+            if oc > mc:
+                diff = 2 * (oc - mc) - 1
+                if diff > 0:
+                    r.append(oc - 1)
+                    parity ^= 1
+                    if diff < lowest_amount:
+                        lowest_dim = i
+                        lowest_amount = diff
+                else:
+                    r.append(oc)
+                    if -diff < lowest_amount:
+                        lowest_dim = i
+                        lowest_amount = -diff
+            else:
+                diff = 2 * (mc - oc) - 1
+                if diff > 0:
+                    r.append(oc + 1)
+                    parity ^= 1
+                    if diff < lowest_amount:
+                        lowest_dim = i
+                        lowest_amount = diff
+                else:
+                    r.append(oc)
+                    if -diff < lowest_amount:
+                        lowest_dim = i
+                        lowest_amount = -diff
+        if parity:
+            if r[lowest_dim] > self.coords[lowest_dim]:
+                r[lowest_dim] -= 1
+            else:
+                r[lowest_dim] += 1
         return (sum((a-b)**2 for (a, b) in zip(self.coords, r))**(1/2), r)
 
 class point_to_5d:
@@ -575,7 +697,7 @@ def benchmark_factory(factory):
     """
     for k in range(3, 40):
         results = []
-        for q in range(100):
+        for q in range(2):
             points = [factory() for i in range(k)]
             anneal(points)
             vals = []
@@ -590,18 +712,18 @@ lattice_factories = [lambda: point_to_4d(2),
         lambda: point_to_5d(4), 
         lambda: point_to_5d(5),
         lambda: point_to_8d(6),
-        point_7,
+        lambda: point_to_8d(7),
         lambda: point_to_8d(8),
-        lambda: multipoint([point_to_8d(8), point_on_torus(1)]),
-        lambda: multipoint([point_to_8d(8), point_to_4d(2)]),
-        lambda: multipoint([point_to_8d(8), point_to_4d(3)]),
-        lambda: multipoint([point_to_8d(8), point_to_5d(4)]),
-        lambda: multipoint([point_to_8d(8), point_to_5d(5)]),
-        lambda: multipoint([point_to_8d(8), point_to_8d(6)]),
-        lambda: multipoint([point_to_8d(8), point_7()]),
-        lambda: multipoint([point_to_8d(8), point_to_8d(8)])]
+        lambda: point_over_8d(9),
+        lambda: point_over_8d(10),
+        lambda: point_over_8d(11),
+        lambda: point_over_8d(12),
+        lambda: point_over_8d(13),
+        lambda: point_over_8d(14),
+        lambda: point_over_8d(15),
+        lambda: point_over_8d(16)]
 
-#benchmark_factory(lambda: point_to_4d(3))
+#benchmark_factory(lambda: point_to_4d(4))
 
 def find_average_distance(factory):
     distances = []
@@ -630,7 +752,7 @@ def show_distances():
     ax.legend()
     plt.show()
 
-show_distances()
+#show_distances()
 
 def close(a, b):
     assert a-b < .00001
