@@ -151,6 +151,15 @@ offsets_7 = [[0] * 7,
         [1, 1, 0, 0, 1, 1, 0],
         [1, 1, 0, 1, 0, 0, 1]]
 
+"""
+0001111
+011001-
+01-1-00
+1010-01
+10--010
+11001-0
+1-0100-
+"""
 class point_7:
     def __init__(self, other_coords = None):
         if other_coords:
@@ -354,17 +363,18 @@ over_8d_offsets = [[]] * 9 + [
     [[0] * 11, [1] * 8 + [0, 0, 0]],
     [[0] * 12, [1] * 8 + [0] * 4, [1] * 4 + [0] * 4 + [1] * 4, [0] * 4 + [1] * 8],
     [[0] * 13, [1] * 8 + [0] * 5, [1] * 4 + [0] * 4 + [1] * 4 + [0], [0] * 4 + [1] * 8 + [0]],
-    [[0] * 14, [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
-        [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
-        [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-        [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
-        [1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0],
-        [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
-        [1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1]],
+    xorvectors([[0, 0, 0, 1, 1, 1, 1] * 2, 
+        [0, 1, 1, 0, 0, 1, 1] * 2,
+        [1, 0, 1, 0, 1, 0, 1] * 2]),
     xorvectors([[0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
         [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
         [0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
-        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]])
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]]),
+    xorvectors([[0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+        [0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
+        [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
 ]
 
 over_8d_offsets.append([x + [0] for x in over_8d_offsets[-1]])
@@ -391,11 +401,11 @@ class point_over_8d:
                 self.coords[i] += 1
                 self.parity ^= 1
 
-    def distance(self, other):
-        return self._closest(other)[0]
+    def distance(self, other, banlimit = None):
+        return self._closest(other, banlimit)[0]
 
-    def move_from(self, other, distance):
-        d, c = self._closest(other)
+    def move_from(self, other, distance, banlimit = None):
+        d, c = self._closest(other, banlimit)
         mag = distance/d
         self.coords = [tocoord + (tocoord-fromcoord)*mag for (tocoord, fromcoord) in zip(self.coords, c)]
         self._canonicalize()
@@ -407,20 +417,23 @@ class point_over_8d:
         other._canonicalize()
         return other
 
-    def _closest(self, other):
-        candidates = [self._closest2(self._make(other, offsets)) for offsets in over_8d_offsets[len(self.coords)]]
+    def _closest(self, other, banlimit):
+        candidates = [self._closest2(self._make(other, offsets), banlimit) for offsets in over_8d_offsets[len(self.coords)]]
         return min(candidates)
 
     def _make(self, other, offsets):
         return point_over_8d(None, [c + 0.5 if x else c for c, x in zip(other.coords, offsets)], other.parity)
 
-    def _closest2(self, other):
+    def _closest2(self, other, banlimit):
         parity = self.parity ^ other.parity
         d = len(self.coords)
         lowest_dim = -1
         lowest_amount = 2
         r = []
         for i in range(d):
+            allowed = True
+            if banlimit and ((banlimit <= i < 7) or i >= banlimit + 7):
+                allowed = False
             oc = other.coords[i]
             mc = self.coords[i]
             if oc > mc:
@@ -428,12 +441,12 @@ class point_over_8d:
                 if diff > 0:
                     r.append(oc - 1)
                     parity ^= 1
-                    if diff < lowest_amount:
+                    if diff < lowest_amount and allowed:
                         lowest_dim = i
                         lowest_amount = diff
                 else:
                     r.append(oc)
-                    if -diff < lowest_amount:
+                    if -diff < lowest_amount and allowed:
                         lowest_dim = i
                         lowest_amount = -diff
             else:
@@ -441,12 +454,12 @@ class point_over_8d:
                 if diff > 0:
                     r.append(oc + 1)
                     parity ^= 1
-                    if diff < lowest_amount:
+                    if diff < lowest_amount and allowed:
                         lowest_dim = i
                         lowest_amount = diff
                 else:
                     r.append(oc)
-                    if -diff < lowest_amount:
+                    if -diff < lowest_amount and allowed:
                         lowest_dim = i
                         lowest_amount = -diff
         if parity:
@@ -455,6 +468,38 @@ class point_over_8d:
             else:
                 r[lowest_dim] += 1
         return (sum((a-b)**2 for (a, b) in zip(self.coords, r))**(1/2), r)
+
+class point_to_14d:
+    def __init__(self, d, other_coords = None, other_parity = None):
+        if other_coords:
+            self.coords = other_coords[:]
+            self.parity = other_parity
+            self._canonicalize()
+        else:
+            self.coords = [uniform(0, 1) for x in range(d)]
+            self.parity = randrange(2)
+
+    def clone(self):
+        return point_to_14d(0, self.coords, self.parity)
+
+    def _expand(self):
+        return point_over_8d(None, self.coords + self.coords[len(self.coords) - 7:7], self.parity)
+
+    def _contract(self, other):
+        self.parity = other.parity
+        self.coords = other.coords[:len(self.coords)]
+
+    def _canonicalize(self):
+        self._contract(self._expand())
+
+    def distance(self, other):
+        return self._expand().distance(other._expand(), len(self.coords) - 7)
+
+    def move_from(self, other, distance):
+        p1 = self._expand()
+        p2 = other._expand()
+        p1.move_from(p2, distance, len(self.coords) - 7)
+        self._contract(p1)
 
 class point_to_5d:
     """
@@ -715,10 +760,10 @@ lattice_factories = [lambda: point_to_4d(2),
         lambda: point_to_8d(7),
         lambda: point_to_8d(8),
         lambda: point_over_8d(9),
-        lambda: point_over_8d(10),
-        lambda: point_over_8d(11),
-        lambda: point_over_8d(12),
-        lambda: point_over_8d(13),
+        lambda: point_to_14d(10),
+        lambda: point_to_14d(11),
+        lambda: point_to_14d(12),
+        lambda: point_to_14d(13),
         lambda: point_over_8d(14),
         lambda: point_over_8d(15),
         lambda: point_over_8d(16)]
@@ -752,7 +797,7 @@ def show_distances():
     ax.legend()
     plt.show()
 
-#show_distances()
+show_distances()
 
 def close(a, b):
     assert a-b < .00001
